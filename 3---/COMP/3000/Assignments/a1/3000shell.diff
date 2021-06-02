@@ -1,0 +1,209 @@
+*** 3000shell.c	2021-01-22 00:57:39.000000000 -0500
+--- 3000shell-modified.c	2021-02-06 18:38:09.452000000 -0500
+***************
+*** 218,224 ****
+  }
+  
+  void run_program(char *args[], int background, char *stdout_fn,
+!                  char *path, char *envp[])
+  {
+          pid_t pid;
+          int fd, *ret_status = NULL;
+--- 218,224 ----
+  }
+  
+  void run_program(char *args[], int background, char *stdout_fn,
+!                  char* stdin_fn, char *path, char *envp[])
+  {
+          pid_t pid;
+          int fd, *ret_status = NULL;
+***************
+*** 242,247 ****
+--- 242,253 ----
+                          close(fd);
+                  }
+                  
++                 if (stdin_fn != NULL) {
++                         fd = open(stdin_fn, O_RDONLY);
++                         dup2(fd, 0);
++                         close(fd);
++                 }
++                 
+                  if (execve(bin_fn, args, envp)) {
+                          puts(strerror(errno));
+                          exit(127);
+***************
+*** 249,255 ****
+          }
+  }
+  
+! void prompt_loop(char *username, char *path, char *envp[])
+  {
+          char buffer[BUFFER_SIZE];
+          char *args[ARR_SIZE];
+--- 255,277 ----
+          }
+  }
+  
+! void cd(char *path, char **pwd, char *envp[]){
+! 	int r;
+! 
+! 	r = chdir(path);
+! 
+! 	if(r < 0){
+! 		fprintf(stderr, "cd: error, no such directory %s.\n", path);
+! 		return;
+! 	}
+! 	
+! 	char cwd[PATH_MAX];
+! 	
+! 	setenv("PWD", getcwd(cwd, PATH_MAX), 1);
+! 	*pwd = find_env("PWD", "/home/student", envp);
+! }
+! 
+! void prompt_loop(char *username, char *path, char *hostname, char *pwd, char *envp[])
+  {
+          char buffer[BUFFER_SIZE];
+          char *args[ARR_SIZE];
+***************
+*** 258,267 ****
+          size_t nargs;
+          char *s;
+          int i, j;
+!         char *stdout_fn;
+          
+          while(1){
+!                 printf("%s $ ", username);
+                  s = fgets(buffer, BUFFER_SIZE, stdin);
+                  
+                  if (s == NULL) {
+--- 280,289 ----
+          size_t nargs;
+          char *s;
+          int i, j;
+!         char *stdout_fn, *stdin_fn;
+          
+          while(1){
+!                 printf("%s@%s:%s$ ", username, hostname, pwd);
+                  s = fgets(buffer, BUFFER_SIZE, stdin);
+                  
+                  if (s == NULL) {
+***************
+*** 283,295 ****
+                          continue;
+                  }
+  
+                  background = 0;            
+                  if (strcmp(args[nargs-1], "&") == 0) {
+                          background = 1;
+                          nargs--;
+                          args[nargs] = NULL;
+!                 }
+! 
+                  stdout_fn = NULL;
+                  for (i = 1; i < nargs; i++) {
+                          if (args[i][0] == '>') {
+--- 305,329 ----
+                          continue;
+                  }
+  
++ 		if(!strcmp(args[0], "cd")){
++ 			if(nargs == 1){
++ 				cd("/home/student", &pwd, envp);
++ 				continue;
++ 			} else if(nargs == 2){
++ 				cd(args[1], &pwd, envp);
++ 				continue;
++ 			} else{
++ 				fprintf(stderr, "cd: Too many arguments for cd command.\n");
++ 			}
++ 		}
++ 
+                  background = 0;            
+                  if (strcmp(args[nargs-1], "&") == 0) {
+                          background = 1;
+                          nargs--;
+                          args[nargs] = NULL;
+!                 }		
+! 		
+                  stdout_fn = NULL;
+                  for (i = 1; i < nargs; i++) {
+                          if (args[i][0] == '>') {
+***************
+*** 305,311 ****
+                          }
+                  }
+                  
+!                 run_program(args, background, stdout_fn, path, envp);
+          }    
+  }
+  
+--- 339,360 ----
+                          }
+                  }
+                  
+!                 stdin_fn = NULL;
+!                 for (i = 1; i < nargs; i++) {
+!                         if (args[i][0] == '<') {
+!                                 stdin_fn = args[i];
+!                                 stdin_fn++;
+!                                 printf("Set stdin to %s\n", stdin_fn);
+!                                 for (j = i; j < nargs - 1; j++) {
+!                                         args[j] = args[j+1];
+!                                 }
+!                                 nargs--;
+!                                 args[nargs] = NULL;
+!                                 break;
+!                         }
+!                 }
+!                 
+!                 run_program(args, background, stdout_fn, stdin_fn, path, envp);
+          }    
+  }
+  
+***************
+*** 318,325 ****
+          
+          char *path;
+          char *default_path = "/usr/bin:/bin";
+          
+!         memset (&signal_handler_struct, 0, sizeof(signal_handler_struct));
+          signal_handler_struct.sa_handler = signal_handler;
+          signal_handler_struct.sa_flags = SA_RESTART;
+          
+--- 367,380 ----
+          
+          char *path;
+          char *default_path = "/usr/bin:/bin";
++        
++ 	char *hostname;
++ 	char *default_hostname = "HOST";
++  
++ 	char *pwd;
++ 	char *default_pwd = "/home/student";
+          
+! 	memset (&signal_handler_struct, 0, sizeof(signal_handler_struct));
+          signal_handler_struct.sa_handler = signal_handler;
+          signal_handler_struct.sa_flags = SA_RESTART;
+          
+***************
+*** 333,340 ****
+          
+          username = find_env("USER", default_username, envp);
+          path = find_env("PATH", default_path, envp);
+  
+!         prompt_loop(username, path, envp);
+          
+          return 0;
+  }
+--- 388,397 ----
+          
+          username = find_env("USER", default_username, envp);
+          path = find_env("PATH", default_path, envp);
++ 	hostname = find_env("HOSTNAME", default_hostname, envp);
++ 	pwd = find_env("PWD", default_pwd, envp);
+  
+!         prompt_loop(username, path, hostname, pwd, envp);
+          
+          return 0;
+  }

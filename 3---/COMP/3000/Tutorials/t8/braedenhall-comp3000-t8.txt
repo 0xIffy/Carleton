@@ -1,0 +1,36 @@
+
+
+
+
+Part A:
+
+1.	- copy_to_user() and copy_from_user() both copy blocks of data to/from user space meaning you can copy what ever data is needed. get_user() and put_user() only copy simple variables like chars or ints.
+		- These variables are necessary because we are trying to access complex data variables (structs), this can't be done with the other functions.
+		- We can't directly access the userspace address because the kernel space and the userspace have differtent virtual address spaces. Trying to do this would likely result in a page fault and the death of the calling process.
+
+2.	- allows modification of special device files, editing name etc
+		- file struct, command, address; executes the command (read comments in code)
+		- file descriptor that points top the device, the PHYSVIEW_WALK cmd (int) and a memory struct containing the variable we want to map
+
+3.	- get_physical does
+		- mm_struct pointer
+		- does "page table walk" until you get a page table entry, then gets physical address of the page frame number
+
+4.	- multiplys the pfn by the number of bits it can hold? then gets the adress within a specific page through the mod and adds it to the prev calc
+
+
+Part B:
+
+1.	- Virtual addresses are as expected, stack expands down, heap expands up.
+		- Physical addresses appear to be random, do appear to be smaller than virt addresses since physical mem has limited space
+
+2.	Both print addresses of various variables to the screen. The original uses printf while memview2 uses the report_memory func. This func gste the physical address of the variables
+		and prints both to the screen. Output very similar except memview2 output phys mem as well.
+
+3.	Virtual mem increases by 16 down the list (buf[0] to buf[29]). Physical mem has no pattern , i.e. it is random which makes sense since its stored in RAM (Random Access Memory).
+
+4.	- Virtual addresses not the same but similar, difference comes from the ALSR file. Physical addresses are still random for the most part.
+		-  lmsg, main and gmsg. Happens because these variables are stored as program constsants that do not change. So the compiler stores them in the program binary. The binary
+		file is cached so it does not need read from disk each time it runs.
+
+5.	The memory cache was dropped so all the data stored was lost including the cached binary. So it must be read again but the new address will be different, as it is randomly chosen.

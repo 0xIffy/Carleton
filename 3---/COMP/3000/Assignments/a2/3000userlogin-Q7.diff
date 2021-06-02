@@ -1,0 +1,81 @@
+*** 3000userlogin-Q7.c	2021-03-08 16:55:35.000000000 -0500
+--- 3000userlogin-patched.c	2021-02-25 16:56:39.000000000 -0500
+***************
+*** 13,39 ****
+  {
+          int result;
+          char *shell_argv[3];
+- 	char *cmd_argv[argc - 1];
+          char *username, *s, *salt, full[128], *index, computed[128], openssl_cmd[128];
+          extern char **environ;
+          struct spwd *sp_entry;
+  	struct passwd *pw_entry;
+                  
+!         if (argc < 3) {
+!                 fprintf(stderr, "Usage: %s <username> <command>\n", argv[0]);
+                  exit(-1);
+!         }	
+! 	
+          printf("uid=%d, euid=%d, gid=%d, egid=%d\n",
+                 getuid(), geteuid(), getgid(), getegid());
+  
+          username = argv[1];
+- 
+- 	cmd_argv[0] = argv[2];
+- 	for(int i = 3; i < argc; i++){
+- 		cmd_argv[i-2] = argv[i];
+- 	}
+- 	cmd_argv[argc-2] = NULL;
+          
+          pw_entry = getpwnam(username);
+  	sp_entry = getspnam(username); // this retrieves the entry from /etc/shadow
+--- 13,32 ----
+  {
+          int result;
+          char *shell_argv[3];
+          char *username, *s, *salt, full[128], *index, computed[128], openssl_cmd[128];
+          extern char **environ;
+          struct spwd *sp_entry;
+  	struct passwd *pw_entry;
+                  
+!         if (argc < 2) {
+!                 fprintf(stderr, "Usage: %s <username>\n", argv[0]);
+                  exit(-1);
+!         }
+! 
+          printf("uid=%d, euid=%d, gid=%d, egid=%d\n",
+                 getuid(), geteuid(), getgid(), getegid());
+  
+          username = argv[1];
+          
+          pw_entry = getpwnam(username);
+  	sp_entry = getspnam(username); // this retrieves the entry from /etc/shadow
+***************
+*** 80,85 ****
+--- 73,81 ----
+                  exit(-5);
+          }
+  
++         shell_argv[0] = "bash";
++         shell_argv[1] = "--login";
++         shell_argv[2] = NULL;
+  
+          clearenv();
+          setenv("USERNAME", pw_entry->pw_name, 1);
+***************
+*** 88,93 ****
+          setenv("HOME", pw_entry->pw_dir, 1);
+          setenv("COMP3000", "yes", 1);
+          
+! 	execvpe(cmd_argv[0], cmd_argv, environ);
+!         return 0;
+  }
+--- 84,91 ----
+          setenv("HOME", pw_entry->pw_dir, 1);
+          setenv("COMP3000", "yes", 1);
+          
+!         execve("/bin/bash", shell_argv, environ);
+!      
+!         fprintf(stderr, "Failed to exec bash\n");
+!         return -6;
+  }

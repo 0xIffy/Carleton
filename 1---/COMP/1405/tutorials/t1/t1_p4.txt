@@ -1,0 +1,7 @@
+1. 21 and 23
+2.  a) Devide 44 by 2 to get 22
+	b) Take the answer subract one add this to the other half to get 21 and 23
+3. Note: If x is odd then no solution exists because 2 odd numbers cannot add to an even number.
+	a) Devide x by 2
+	b) Subtrcat 1 from x/2 to get the first number
+	c) Add 1 to x/2 to get the second number

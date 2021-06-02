@@ -1,0 +1,125 @@
+*** newgetpid.c	2021-03-13 16:05:39.000000000 -0500
+--- newgetpid-modified.c	2021-04-12 16:01:47.436000000 -0400
+***************
+*** 12,17 ****
+--- 12,20 ----
+  #include <linux/kernel.h>
+  #include <linux/sched.h>
+  #include <asm/uaccess.h>
++ #include <linux/uaccess.h>
++ #include <linux/pid.h>
++ #include <linux/cred.h>
+  
+  #define dbg(format, arg...) do { if (debug) pr_info(CLASS_NAME ": %s: " format, __FUNCTION__, ## arg); } while (0)
+  #define err(format, arg...) pr_err(CLASS_NAME ": " format, ## arg)
+***************
+*** 25,30 ****
+--- 28,34 ----
+  static struct class* newgetpid_class = NULL;
+  static struct device* newgetpid_device = NULL;
+  static int newgetpid_major;
++ static struct task_struct *process = NULL;
+  
+  static int newgetpid_open(struct inode *the_inode, struct file *f)
+  {
+***************
+*** 34,40 ****
+  static ssize_t newgetpid_read(struct file *f, char *buf, size_t len, loff_t *offset)
+  {
+          size_t i, msglen;
+!         pid_t thepid;
+  
+          char message[100];
+          
+--- 38,46 ----
+  static ssize_t newgetpid_read(struct file *f, char *buf, size_t len, loff_t *offset)
+  {
+          size_t i, msglen;
+! 	pid_t ppid;
+! 	uid_t uid;
+! 	gid_t gid;	
+  
+          char message[100];
+          
+***************
+*** 42,50 ****
+                  return 0;
+          }
+          
+!         thepid = task_tgid_vnr(current);
+! 
+!         snprintf(message, 100, "Your PID is %d!\n", thepid);
+          
+          msglen = strlen(message);
+  
+--- 48,62 ----
+                  return 0;
+          }
+          
+! 	if(process == NULL){
+! 		process = current;
+! 	}	
+! 
+! 	ppid = task_ppid_nr(process);
+! 	uid = process->cred->euid.val;
+! 	gid = process->cred->egid.val;	
+!         
+! 	snprintf(message, 100, "PPID=%d, EUID=%d, EGID=%d\n", ppid,uid,gid);
+          
+          msglen = strlen(message);
+  
+***************
+*** 61,66 ****
+--- 73,97 ----
+          return i;
+  }
+  
++ static ssize_t newgetpid_write(struct file *f, const char __user *buf, size_t len, loff_t *offset)
++ {
++         char message[100];
++ 	int pid;
++ 	struct pid *pid_struct;
++ 
++ 
++ 	copy_from_user(message, buf, len);
++ 
++ 	message[len-1] = '\0';
++ 
++ 	kstrtoint(message, 10, &pid);
++ 
++         pid_struct = find_get_pid((pid_t) pid);
++ 	process = pid_task(pid_struct, PIDTYPE_PID);
++ 
++ 	return len;
++ }
++ 
+  static int newgetpid_release(struct inode *the_inode, struct file *f)
+  {
+          printk(KERN_ALERT "Newgetpid device closed\n");
+***************
+*** 71,76 ****
+--- 102,108 ----
+  static struct file_operations newgetpid_fops = {
+          .open = newgetpid_open,
+          .read = newgetpid_read,
++ 	.write = newgetpid_write,
+          .release = newgetpid_release,
+  };
+  
+***************
+*** 78,84 ****
+  static char *newgetpid_devnode(struct device *dev, umode_t *mode)
+  {
+          if (mode)
+! 	        *mode = 0444;
+          return NULL;
+  }
+  
+--- 110,116 ----
+  static char *newgetpid_devnode(struct device *dev, umode_t *mode)
+  {
+          if (mode)
+! 	        *mode = 0666;
+          return NULL;
+  }
+  

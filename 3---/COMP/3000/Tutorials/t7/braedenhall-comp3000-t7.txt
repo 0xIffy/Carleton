@@ -1,0 +1,129 @@
+COMP3000 Tutorial 7
+Braeden Hall
+101143403
+March 21, 2021
+
+Part A:
+
+1. f1 is a regular file and the others are both character devices. f2 and f3 seem tob very similar to /dev/urandom in 
+		all aspects (major and minor #, content etc.) but f3 has different permission bits.
+
+2.  mknod: ls > pipe1 & wc <pipe1, runs ls in background then runs wc
+		mkfifo: same process
+	
+3.	Their characteristics are the same
+
+4.	To disable echo use command stty -echo. This prevents user input characters from appearing, but it still displays output.
+		stty echo can be used to turn echo back on.
+
+
+Part B:
+
+1.	At least 2 ways to view kernel messages: dmesg and the kernel log file /var/log/kern.log.
+
+2.	lsmod is used to list loaded modules.
+
+3. rmmod <modulename> can be used to remove modules.
+
+
+Part C:
+
+1.	comp3000: Ones device registered using major 240.
+		- find /sys | grep ones to find files
+		Seems like /sys/modules/ones dir was created with various files.
+
+2.	When you cat itprints infinite ones to the screen
+		- head -c <num> /dev/ones
+		- read func in ones.C
+		- less can also be used to limit output
+
+3.	do some printing
+
+
+Pard D:
+
+1.	current is a struct task_struct pointer. I had to look at the source code for current.h to find it.
+
+2.	Change line 22 from "newgetpid" to "describe"
+
+3.	See diff below
+
+Part D 3 diff:
+*** newgetpid.c	2021-03-21 16:38:47.120000000 -0400
+--- newgetpid-modified.c	2021-03-21 16:31:12.900000000 -0400
+***************
+*** 12,17 ****
+--- 12,18 ----
+  #include <linux/kernel.h>
+  #include <linux/sched.h>
+  #include <asm/uaccess.h>
++ #include <linux/cred.h>
+  
+  #define dbg(format, arg...) do { if (debug) pr_info(CLASS_NAME ": %s: " format, __FUNCTION__, ## arg); } while (0)
+  #define err(format, arg...) pr_err(CLASS_NAME ": " format, ## arg)
+***************
+*** 19,25 ****
+  #define warn(format, arg...) pr_warn(CLASS_NAME ": " format, ## arg)
+  
+  
+! #define DEVICE_NAME "newgetpid"
+  #define CLASS_NAME "comp3000b"
+  
+  static struct class* newgetpid_class = NULL;
+--- 20,26 ----
+  #define warn(format, arg...) pr_warn(CLASS_NAME ": " format, ## arg)
+  
+  
+! #define DEVICE_NAME "describe"
+  #define CLASS_NAME "comp3000b"
+  
+  static struct class* newgetpid_class = NULL;
+***************
+*** 34,41 ****
+  static ssize_t newgetpid_read(struct file *f, char *buf, size_t len, loff_t *offset)
+  {
+          size_t i, msglen;
+!         pid_t thepid;
+! 
+          char message[100];
+          
+          if (*offset > 0) {
+--- 35,49 ----
+  static ssize_t newgetpid_read(struct file *f, char *buf, size_t len, loff_t *offset)
+  {
+          size_t i, msglen;
+!         pid_t thepid,theppid;
+! //	kuid_t uid, euid;
+! //	kgid_t gid, egid;
+! 
+! /*	uid = current_uid();
+! 	gid = current_gid();
+! 	euid = current_euid();
+! 	egid = current_egid();
+! */		
+          char message[100];
+          
+          if (*offset > 0) {
+***************
+*** 43,51 ****
+          }
+          
+          thepid = task_tgid_vnr(current);
+  
+-         snprintf(message, 100, "Your PID is %d!\n", thepid);
+-         
+          msglen = strlen(message);
+  
+          if (len < msglen) {
+--- 51,61 ----
+          }
+          
+          thepid = task_tgid_vnr(current);
++ 	theppid = task_ppid_nr(current);
++ 
++         snprintf(message, 100, "Your PID is %d, and your PPID is %d!\n uid=%d, euid=%d, gid=%d, egid=%d\n",
++ 		 thepid, theppid, current->cred->uid.val, current->cred->euid.val, current->cred->gid.val, current->cred->egid.val);
+  
+          msglen = strlen(message);
+  
+          if (len < msglen) {

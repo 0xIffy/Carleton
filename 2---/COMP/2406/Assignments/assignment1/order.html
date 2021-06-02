@@ -1,0 +1,21 @@
+<!Doctype HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="style.css">
+		<title>LoTD</title>
+	</head>
+	<body onload="loadOptions()">
+		<label for="restaurants">Select Restauraunt: </label>
+		<select onchange="selectRestaurant()" name="restauraunts" id="restaurants">
+		</select>
+
+		<div id="page">
+			<div id="title"></div>
+			<div class="sticky col" id="categories" style="width: 15%"></div>
+			<div class="col" id="menu" style="width: 55%"></div>
+			<div class="sticky col" id="order" style="width: 30%"></div>
+		</div>
+	</body>
+	<script src="client.js"></script>
+</html>

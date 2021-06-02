@@ -1,0 +1,35 @@
+COMP3000 Assignment 2
+Braeden Hall
+101143403
+March 10, 2021
+
+Part 1:
+
+1. - The getenv() library function searches the env. vari. list for the value of the vari. with the given name
+	 - The array envp that can be accesed through the parametres of a program provides the program's environment variables. This list can be seached for the value of the vari. with the given name as we have seen in 3000shell.call
+	 - environ is a variable declared in unistd.h file, it provides an array of env. variables much like envp. The main difference is that environ must be declared in a program to be used, however, the array can be searched for a value in the same way
+
+2. - The user passwords are normally stored in the shadow file/database in hashed form. The shadow file can only be read by root and those in shadow's group (which does not have any users)
+	 - Encrypted passwords can optionally be stored in the passwd file/database, this file can be read by everyone. However, the password stored is encrypted so that the actual password cannot easily be guessed just because you know the hashed version
+
+Part 2:
+
+2. 	Line 38 uses the memcpy() lib func to copy the hashed password retrieved from the shadow file and stores the value in the variable 'full'. It is the variable 'full' that is then compared to hashed value of the input user password to authenticate 
+		the user. After being copied, the value of sp_entry->sp_pwdp is then split into the tokens 'index' and salt to be passed into the openssl command to hash the input password.
+	 
+3.	- exec() can only execute a binary file of script file. What we want to do here is execute the specified command in the shell and receive the output stream.
+		- the exec() call replaces the current running process with that of the file passed to it. This is not what we want in this case because we still need to continue the login process after the openssl command is executed.
+
+4.	According to the man page for popen(), when we pass the "r" flag to read the stdin is the same as the that of the currently running process. We know this because 3000userlogin never explicitly asks the user to enter their password,
+		it is openssl command that requires this functionality. So, when the command is executed by popen() openssl prompts the user for a password, this password is written to the stdin of the current process (userlogin) which is the same as 
+		the input for openssl so that the password can be encrypted.
+
+5.	Inorder to retrive the user's encrypted password the userlogin process needs to read from the shadow file; this is done using the call to getspnam() on line 32. As previously explained, the only user with read access to the shadow file is root. 
+		Therefore, without setuid, the call to getspnam() on line 32 will fail and return NULL. The if statement on the next line is what checks that output and prints the error message. I found this out by reading the code and the manual page for the getspnam lib call.
+
+6. 	As the call to popen() creates a new process for the executed command, the process needs to be waited on so the output can be properly received and the new process does not enter a zombie state. It is the call to pclose() that waits for the process and returns its exit staus.
+		The fclose() lib call simply flushes the stream to stdout and closes the file descriptor; this would be insufficient cleanup in this case.
+
+
+
+Idea to use shells scripts for q8 came from: https://www.unix.com/programming/216190-putting-bash-script-c-program.html

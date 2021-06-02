@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>LoTD</title>
+	</head>
+	<body>
+		<%- include("../partials/header.ejs"); %>
+		<br/>
+		<div>
+			<% users.forEach(user => { %>
+				<a href="/users/<%=user._id%>"><%= user.username %></a><br/>
+			<% }); %>
+		</div>
+	</body>
+</html>

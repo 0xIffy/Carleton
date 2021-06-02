@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>LoTD Admin</title>
+	</head>
+	<body>
+		<%- include("../partials/header.ejs"); %>
+		<br/>
+		
+		<% restaurants.forEach((restaurant) => { %>
+			<a href="/restaurants/<%= restaurant.id %>"><%= restaurant.name %></a>
+			<br/>
+		<% }); %>
+	</body>
+</html>

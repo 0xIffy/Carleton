@@ -1,0 +1,165 @@
+COMP3000 Tutorial 2
+Braeden Hall
+101143403
+January 28, 2021
+
+2. - The 3000shell prints the user's username at the prompt
+	 - the 3000shell does not show the debugging messages (waiting for child() etc.)
+
+3. Same way as with bash, use the '&' key at the end of the command.
+
+4. 1) For programs like nano and top which take input, that input is shared between the shell and the running program; this makes both quite inconsistent with what it takes in.
+	 2) For simple/quick programs like ls and which behavior does not change too much, thogh you do get the promt back before ls runs, so in theory you could run other commands before hand.
+
+5. The second category of programs desribed in the previous question is no trouble to recover from as the program terminates quickly and the prompt comes back.
+	 However, for the first category, since the input is inconsistent, the way I found to recover is just spam whatever command terminates the program until I get lucky and the input is accepted.
+
+6. Input redirection in 3000shell works simalarly to how it does in bash; using the '>' character. However, the differnce here is that you can not include a space after the '>' character or else you get an error.
+
+7. check diff
+
+8. check diff
+
+9. Not tested but since the SA_RESTART flag tells the file to restart an action when a signal is called during said action, I ssume the deleting the line will cause issues when long actions are interuppted by signals.
+
+10. find_env takes 3 params, getenv takes 1, both return same val.
+
+11. check diff
+
+Diff Output:
+
+*** 3000shell.c	2021-01-22 00:57:39.000000000 -0500
+--- 3000shellEdit.c	2021-01-29 14:08:49.676000000 -0500
+***************
+*** 122,127 ****
+--- 122,128 ----
+  
+                  
+                  stat_return = stat(fn, &file_status);
++ 		printf("%s\n", fn);		
+  
+                  if (stat_return == 0) {
+                          return;
+***************
+*** 154,159 ****
+--- 155,162 ----
+          char comm[COMM_SIZE];  /* seems to just need 16 */        
+          char comm_fn[512];
+          int fd, i, n;
++ 	FILE *fptr;
++ 	char fn[BUFFER_SIZE], ppid[16], garb[64];
+  
+          proc = opendir(proc_prefix);
+  
+***************
+*** 167,180 ****
+                          fd = open(comm_fn, O_RDONLY);
+                          if (fd > -1) {                                
+                                  n = read(fd, comm, COMM_SIZE);
+!                                 close(fd);
+                                  for (i=0; i < n; i++) {
+                                          if (comm[i] == '\n') {
+                                                  comm[i] = '\0';
+                                                  break;
+                                          }
+                                  }
+!                                 printf("%s: %s\n", e->d_name, comm);
+                          } else {
+                                  printf("%s\n", e->d_name);
+                          }
+--- 170,187 ----
+                          fd = open(comm_fn, O_RDONLY);
+                          if (fd > -1) {                                
+                                  n = read(fd, comm, COMM_SIZE);
+! 				sprintf(fn, "/proc/%s/stat", e->d_name);
+! 				fptr = fopen(fn, "r");
+! 				fscanf(fptr, "%s %s %s %s", garb, garb, garb, ppid);
+!                                	fclose(fptr);
+! 				close(fd);
+                                  for (i=0; i < n; i++) {
+                                          if (comm[i] == '\n') {
+                                                  comm[i] = '\0';
+                                                  break;
+                                          }
+                                  }
+!                                 printf("%s is (%s): %s\n", e->d_name, ppid, comm);
+                          } else {
+                                  printf("%s\n", e->d_name);
+                          }
+***************
+*** 196,201 ****
+--- 203,212 ----
+                  return;
+          }
+          
++ 	if(the_signal == SIGUSR1){
++ 		printf("Ouch!\n");
++ 	}
++ 
+          if (the_signal != SIGCHLD) {
+                  fprintf(stderr, "Child handler called for signal %d?!\n",
+                          the_signal);
+***************
+*** 238,244 ****
+  
+                  if (stdout_fn != NULL) {
+                          fd = creat(stdout_fn, 0666);
+!                         dup2(fd, 1);
+                          close(fd);
+                  }
+                  
+--- 249,255 ----
+  
+                  if (stdout_fn != NULL) {
+                          fd = creat(stdout_fn, 0666);
+! 			dup2(fd, 1);
+                          close(fd);
+                  }
+                  
+***************
+*** 321,327 ****
+          
+          memset (&signal_handler_struct, 0, sizeof(signal_handler_struct));
+          signal_handler_struct.sa_handler = signal_handler;
+!         signal_handler_struct.sa_flags = SA_RESTART;
+          
+          if (sigaction(SIGCHLD, &signal_handler_struct, NULL)) {
+                  fprintf(stderr, "Couldn't register SIGCHLD handler.\n");
+--- 332,338 ----
+          
+          memset (&signal_handler_struct, 0, sizeof(signal_handler_struct));
+          signal_handler_struct.sa_handler = signal_handler;
+!         //signal_handler_struct.sa_flags = SA_RESTART;
+          
+          if (sigaction(SIGCHLD, &signal_handler_struct, NULL)) {
+                  fprintf(stderr, "Couldn't register SIGCHLD handler.\n");
+***************
+*** 331,340 ****
+                  fprintf(stderr, "Couldn't register SIGHUP handler.\n");
+          }
+          
+!         username = find_env("USER", default_username, envp);
+!         path = find_env("PATH", default_path, envp);
+  
+!         prompt_loop(username, path, envp);
+          
+          return 0;
+  }
+--- 342,358 ----
+                  fprintf(stderr, "Couldn't register SIGHUP handler.\n");
+          }
+          
+! 	if(sigaction(SIGUSR1, &signal_handler_struct, NULL)){
+!                 fprintf(stderr, "Couldn't register SIGHUP handler.\n");
+!         }
+! 
+!         //username = find_env("USER", default_username, envp);
+!         //path = find_env("PATH", default_path, envp);
+  
+!         username = getenv("USER");
+!         path = getenv("PATH"); 
+!        
+! 	 prompt_loop(username, path, envp);
+          
+          return 0;
+  }

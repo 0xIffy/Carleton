@@ -1,0 +1,56 @@
+<!Doctype HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>LoTD</title>
+	</head>
+	<body>
+		<%- include("../partials/header", {}); %>
+
+		<table>
+            <tr>
+                <th>Restaurant</th>
+                <% restaurantNames.forEach((name) => { %>
+                    <th><%= name %></th>
+                <% }); %>
+            </tr>
+            <tr>
+                <td># Orders</td>
+                <% Object.keys(orders).forEach((key) => { %>
+                    <td><%= orders[key].orderTotals.length %></td>
+                <% }); %>
+            </tr>
+            <tr>
+                <td>Avg. Order Total</td>
+                <% Object.keys(orders).forEach((key) => { %>
+                    <% if(orders[key].orderTotals.length > 0){ %>
+                        <td><%= orders[key].orderTotals.reduce((a,b) => { return a+b }, 0)/orders[key].orderTotals.length %></td>
+                    <% }else{ %>
+                        <td>N/A</td>
+                    <% } %>
+                <% }); %>
+            </tr>
+            <tr>
+                <td>Popular Item</td>
+                <% Object.keys(orders).forEach((key) => { %>
+                    <% let high = 0; %>
+                    <% let pop = null; %>
+                    <% Object.keys(orders[key]).forEach((item) => { %>
+                        <% if(item !== "orderTotals"){ %>
+                            <% if(orders[key][item] > high){ high = orders[key][item]; pop = item; } %>
+                        <% } %>
+                    <% }); %>
+                    <% if(pop){ %>
+                        <% for(cat in restaurants[key].menu){ %>
+                            <% if(Object.keys(restaurants[key].menu[cat]).includes(pop)){ %>
+                                <td><%= restaurants[key].menu[cat][pop].name %></td>
+                            <% } %>
+                        <% } %>
+                    <% }else{ %>
+                        <td>N/A</td>
+                    <% } %>
+                <% }); %>
+            </tr>
+        </table>
+	</body>
+</html>

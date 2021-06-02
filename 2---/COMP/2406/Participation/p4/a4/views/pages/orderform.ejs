@@ -1,0 +1,39 @@
+
+<html>
+	<head>
+		<title>Order Form</title>
+		<style>
+			.column {
+				float: left;
+			}
+
+			.left{
+				width: 15%;
+			}
+			
+			.right {
+				width: 25%;
+			}
+
+			.middle {
+				width: 60%;
+			}
+		</style>
+	</head>
+	
+	<body onload="init()">
+		<%- include("../partials/header.ejs"); %>
+
+		<select id="restaurant-select"></select>
+		<br><br>
+		<div id="info"></div>
+		<div id="main">
+			<div class="column left" id="left"></div>
+			<div class="column middle" id="middle"></div>
+			<div class="column right" id="right"></div>
+		</div>
+	
+		<script src="orderform.js"></script>
+	</body>
+
+</html>

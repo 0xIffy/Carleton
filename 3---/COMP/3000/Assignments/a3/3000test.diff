@@ -1,0 +1,85 @@
+*** 3000test-mod.c	2021-03-26 18:14:52.928000000 -0400
+--- 3000test.c	2021-02-24 16:49:19.000000000 -0500
+***************
+*** 21,40 ****
+          exit(-1);
+  }
+  
+- void sparsecheck(char *fn, struct stat statbuf){
+- 	int physiS;
+- 	size_t logiS;
+- 
+- 	logiS = statbuf.st_size;
+- 	physiS = statbuf.st_blocks * 512;
+- 
+- 	if(physiS < logiS){
+- 		printf("This file has holes\n");
+- 	} else{	
+- 		printf("This file does not have holes\n");
+- 	}
+- }
+- 
+  int main(int argc, char *argv[])
+  {
+          struct stat statbuf;
+--- 21,26 ----
+***************
+*** 65,85 ****
+          printf("   inode %ld\n", statbuf.st_ino);
+          printf("  length %ld\n", len);        
+  
+!         if (S_ISREG(statbuf.st_mode)) { 
+! 		sparsecheck(fn, statbuf);
+! 
+! 		fd = open(fn, O_RDONLY);
+                  if (fd == -1) {
+                          report_error(strerror(errno));
+                  }
+! 
+! 		data = (char *) malloc(len);
+! 		if(read(fd, data, len) < 0){
+                          report_error(strerror(errno));
+! 		}
+  
+- 		printf("%s", data);
+- 	
+                  count = 0;
+                  for (i=0; i<len; i++) {
+                          if (data[i] == 'a') {
+--- 51,67 ----
+          printf("   inode %ld\n", statbuf.st_ino);
+          printf("  length %ld\n", len);        
+  
+!         if (S_ISREG(statbuf.st_mode)) {
+!                 fd = open(fn, O_RDONLY);
+                  if (fd == -1) {
+                          report_error(strerror(errno));
+                  }
+!                 data = (char *) mmap(NULL, len,
+!                                      PROT_READ, MAP_SHARED, fd, 0);
+!                 if (data == MAP_FAILED) {
+                          report_error(strerror(errno));
+!                 }
+  
+                  count = 0;
+                  for (i=0; i<len; i++) {
+                          if (data[i] == 'a') {
+***************
+*** 89,95 ****
+  
+                  printf(" a count %ld\n", count);
+  
+! 		free(data);
+                  close(fd);
+          }
+  
+--- 71,79 ----
+  
+                  printf(" a count %ld\n", count);
+  
+!                 if (munmap(data, len) == -1) {
+!                         report_error(strerror(errno));                        
+!                 }
+                  close(fd);
+          }
+  

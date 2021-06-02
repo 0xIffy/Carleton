@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>LoTD Admin</title>
+	</head>
+	<body>
+		<%- include("../partials/header.ejs"); %>
+		<br/>
+		
+		<label for="name">Enter Name:</label>
+		<input type="text" id="name">
+		<label for="delivery-fee">Enter Delivery Fee:</label>
+		<input id="delivery-fee" type="text"><br/><br/>
+		<label for="min-order">Enter Minimun Order:</label>
+		<input id="min-order" type="text">
+
+		<button type="button" id="new-rest" onclick="addRestaurant()">Add Restaurant</button>
+	</body>
+	<script src="../../client.js"></script>
+</html>

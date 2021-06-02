@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			.column {
+				float: left;
+			}
+
+			.left{
+				width: 75%;
+			}
+			
+			.right {
+				width: 25%;
+			}
+		</style>
+		<meta charset="utf-8">
+		<title>LoTD | Order</title>
+	</head>
+	<body>
+		<%- include("../partials/header.ejs"); %>
+		<br/>
+		<div class="left column">
+			<h3>Ordered By: <a href="/users/<%=order.user._id%>"><%= order.user.username %></a></h3>
+			<p>Restaurant: <%= order.restaurant %></p>
+			<p>Items:</p>
+			<ul>
+				<% for(key in order.items){ %>
+					<li><%= order.items[key].quantity %>x <%= order.items[key].name %></li>
+				<% } %>
+			</ul>
+		</div>
+		<div class="right column">
+			<p>Subtotal: <%= order.subtotal %></p>
+			<p>Tax: <%= order.tax %></p>
+			<p>Delivery Fee: <%= order.fee %></p>
+			<p>Total: <%= order.total %></p>
+		</div>
+	</body>
+</html>

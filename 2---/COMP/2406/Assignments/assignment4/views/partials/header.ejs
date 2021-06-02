@@ -1,0 +1,12 @@
+<div>
+	<a href="/">Home</a>
+	<a href="/users">Users</a>		
+	<% if(session.loggedin == false){ %>
+		<a href="/register">Register</a>
+		<a href="/login">Login</a>
+	<% } else{%>
+		<a href="/users/<%=session.userId%>">Profile</a>
+		<a href="/orders">Order</a>
+		<a href="/logout">Logout</a>
+	<% } %>
+</div>

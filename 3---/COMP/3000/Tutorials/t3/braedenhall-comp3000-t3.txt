@@ -1,0 +1,132 @@
+COMP3000 Tutorial 3
+Braeden Hall
+101143403
+Febuary 5, 2021
+
+Part1:
+
+1. The executable that was complied dynamically is much smaller than the statically compiled one.
+
+2. The static version does not make any library calls, this is because all the library functions are contained within the static binary. Therefore it does not need to make any external lib calls.
+
+3. The dynamic version makes more system calls, most of these additional calls have to do with getting info from/reading files. This makes me think that these extra system calls have to do with reading info about the required libraries so that their functions can be used in the code.
+		Use ltrace -S to track system and lib calls
+
+4. View the list of the output in the appendix section P1Q4.
+
+5. This is because the OS randomizes them for the security purposes by default. This can be changed in the /proc/sys/kernel/randomized_va_space file, by changing ist value.
+
+6. According to the dynamically compiled code, the stack appears to be arround mem address 7ff**... The heap around 55aa7c**... The data and code segments around 55aa7b**..., thedata segment is slightly above the code secgment.
+
+7. The value of sbrk() reamins the same (as opposed to growing when malloc is called with < 128 KiB). This is because the data is no longer being alocated in the heap. When malloc is called with a size surpassing its MMAP_THRESHOLD (128 KiB) it uses mmap to map data somewhere in the unalloc'd section of the addres space. Therefore the heap will end at the same place meanding the break will not change.
+
+Part 2:
+
+1. Refer to the appendix section P2Q1.
+
+2. The wait system call returns -1 if there is an error, i.e. the is no child process to wait for. Since we only get to the code at that line if we receive a SIGCHLD signal, it doesn't make sense if there is no child process running at the time. Therefore we return.
+
+3. - printf invokes the write sys call to write things to stdout. 
+	 - fgets invokes the read system call to read from stdin
+	 - I think sigaction uses the rt_sigaction system acll to set the signal handler function
+	 - I'm not sure where other system calls are coming from
+
+
+Appendix
+
+P1Q4:
+	linux-vdso.so.1 (0x00007ffd29999000)
+	libprocps.so.8 => /lib/x86_64-linux-gnu/libprocps.so.8 (0x00007fa3fd16e000)
+	libtinfo.so.6 => /lib/x86_64-linux-gnu/libtinfo.so.6 (0x00007fa3fd13e000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fa3fcf4c000)
+	libsystemd.so.0 => /lib/x86_64-linux-gnu/libsystemd.so.0 (0x00007fa3fce9d000)
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007fa3fce97000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fa3fd1ee000)
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007fa3fce8c000)
+	liblzma.so.5 => /lib/x86_64-linux-gnu/liblzma.so.5 (0x00007fa3fce61000)
+	liblz4.so.1 => /lib/x86_64-linux-gnu/liblz4.so.1 (0x00007fa3fce40000)
+	libgcrypt.so.20 => /lib/x86_64-linux-gnu/libgcrypt.so.20 (0x00007fa3fcd22000)
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007fa3fccff000)
+	libgpg-error.so.0 => /lib/x86_64-linux-gnu/libgpg-error.so.0 (0x00007fa3fccdc000)
+
+P2Q1:
+	*** 3000shell.c	2021-01-22 00:57:39.000000000 -0500
+	--- 3000shellEditT3.c	2021-02-05 13:20:40.360000000 -0500
+	***************
+	*** 217,223 ****
+						}
+		}
+		
+	! void run_program(char *args[], int background, char *stdout_fn,
+										char *path, char *envp[])
+		{
+						pid_t pid;
+	--- 217,223 ----
+						}
+		}
+		
+	! void run_program(char *args[], int background, char *stdout_fn, char *stderr_fn,
+										char *path, char *envp[])
+		{
+						pid_t pid;
+	***************
+	*** 242,247 ****
+	--- 242,252 ----
+														close(fd);
+										}
+										
+	+                 if (stderr_fn != NULL) {
+	+                         fd = creat(stderr_fn, 0666);
+	+                         dup2(fd, 2);
+	+                         close(fd);
+	+                 }
+										if (execve(bin_fn, args, envp)) {
+														puts(strerror(errno));
+														exit(127);
+	***************
+	*** 258,264 ****
+						size_t nargs;
+						char *s;
+						int i, j;
+	!         char *stdout_fn;
+						
+						while(1){
+										printf("%s $ ", username);
+	--- 263,269 ----
+						size_t nargs;
+						char *s;
+						int i, j;
+	!         char *stdout_fn, *stderr_fn;
+						
+						while(1){
+										printf("%s $ ", username);
+	***************
+	*** 305,311 ****
+														}
+										}
+										
+	!                 run_program(args, background, stdout_fn, path, envp);
+						}    
+		}
+		
+	--- 310,330 ----
+														}
+										}
+										
+	!                 stderr_fn = NULL;
+	!                 for (i = 1; i < nargs; i++) {
+	!                         if (args[i][0] == '2' && args[i][1] == '>') {
+	!                                 stderr_fn = args[i];
+	!                                 stderr_fn += 2;
+	!                                 printf("Set stderr to %s\n", stderr_fn);
+	!                                 for (j = i; j < nargs - 1; j++) {
+	!                                         args[j] = args[j+1];
+	!                                 }
+	!                                 nargs--;
+	!                                 args[nargs] = NULL;
+	!                                 break;
+	!                         }
+	!                 }
+	!                 run_program(args, background, stdout_fn, stderr_fn, path, envp);
+						}    
+		}

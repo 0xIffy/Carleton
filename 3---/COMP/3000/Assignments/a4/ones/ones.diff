@@ -1,0 +1,92 @@
+*** ones.c	2014-11-12 23:01:22.000000000 -0500
+--- ones-modified.c	2021-04-12 16:03:09.136000000 -0400
+***************
+*** 11,16 ****
+--- 11,17 ----
+  #include <linux/init.h>
+  #include <linux/kernel.h>
+  #include <asm/uaccess.h>
++ #include <linux/uaccess.h>
+  
+  #define dbg(format, arg...) do { if (debug) pr_info(CLASS_NAME ": %s: " format, __FUNCTION__, ## arg); } while (0)
+  #define err(format, arg...) pr_err(CLASS_NAME ": " format, ## arg)
+***************
+*** 25,30 ****
+--- 26,33 ----
+  static struct device* ones_device = NULL;
+  static int ones_major;
+  
++ static char outputChar = '1';
++ 
+  static int ones_open(struct inode *the_inode, struct file *f)
+  {
+          return 0;
+***************
+*** 35,46 ****
+          size_t i;
+  
+          for (i = 0; i < len; i++) {
+!                 put_user('1', buf++);
+          }
+  
+          return i;
+  }
+  
+  static int ones_release(struct inode *the_inode, struct file *f)
+  {
+          printk(KERN_ALERT "Ones device closed\n");
+--- 38,60 ----
+          size_t i;
+  
+          for (i = 0; i < len; i++) {
+!                 put_user(outputChar, buf++);
+          }
+  
+          return i;
+  }
+  
++ static ssize_t ones_write(struct file *f, const char __user *buf, size_t len, loff_t *offset)
++ {
++ 	char message[100];
++ 
++ 	copy_from_user(message, buf, len);	
++ 
++ 	outputChar = message[len-2];
++ 
++         return len;
++ }
++ 
+  static int ones_release(struct inode *the_inode, struct file *f)
+  {
+          printk(KERN_ALERT "Ones device closed\n");
+***************
+*** 51,64 ****
+  static struct file_operations ones_fops = {
+          .open = ones_open,
+          .read = ones_read,
+          .release = ones_release,
+  };
+  
+- 
+  static char *ones_devnode(struct device *dev, umode_t *mode)
+  {
+          if (mode)
+! 	        *mode = 0444;
+          return NULL;
+  }
+  
+--- 65,78 ----
+  static struct file_operations ones_fops = {
+          .open = ones_open,
+          .read = ones_read,
++ 	.write = ones_write,
+          .release = ones_release,
+  };
+  
+  static char *ones_devnode(struct device *dev, umode_t *mode)
+  {
+          if (mode)
+! 	        *mode = 0666;
+          return NULL;
+  }
+  

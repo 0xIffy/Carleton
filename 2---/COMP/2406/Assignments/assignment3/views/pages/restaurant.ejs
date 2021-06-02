@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>LoTD Admin</title>
+	</head>
+	<body onload="getRestaurant('<%= restaurant.id %>')">
+		<%- include("../partials/header.ejs"); %>
+		<br/><br/>
+
+		<label for="name">Restaurant Name</label>
+		<input id="name" type="text" value="<%= restaurant.name %>"><br/><br/>
+		<label for="delivery-fee">Delivery Fee</label>
+		<input id="delivery-fee" type="text" value="<%= restaurant.delivery_fee %>"><br/><br/>
+		<label for="min-order">Minimun Order</label>
+		<input id="min-order" type="text" value="<%= restaurant.min_order %>">
+		<br/><br/>
+
+		<div>
+			<h2>Add a New Category</h2>
+			<label for="new-cat">Category Name: </label>
+			<input id="new-cat" type="text">
+			<button id="add-cat" type="button" onclick="addCategory()">Add Category</button>
+		</div>
+		<div>
+			<h2>Add Menu Item</h2>
+			<label for="cats">Select Category:</label>
+			<select id="cats">
+				<% for(cat in restaurant.menu){ %>
+					<option><%= cat %></option>
+				<% } %>
+			</select><br/>
+			<label for="new-item">Item Name: </label>
+			<input id="new-item" type="text"><br/>
+			<label for="item-price">Item Price: &nbsp;</label>
+			<input id="item-price" type="text"><br/>
+			<div>
+				<label style="vertical-align: top;" for="item-desc">Item Description: </label>
+				<textarea id="item-desc" rows="2"></textarea><br/>
+			</div>
+			<button id="add-item" type="button" onclick="addItem()">Add Item</button>
+		</div>
+		<div id="menu">
+			<h2>Menu</h2>
+			<% for(cat in restaurant.menu){ %>
+				<div id="<%= cat %>">
+					<h3 style='margin-bottom: 5px; margin-top: 0px'><%= cat %></h3>
+					<% let c = restaurant.menu[cat] %>
+					<% for(item in c){ %>
+						<p style='margin: 0px; padding: 0px;'><%= item %>: <%= c[item].name %> (<%= c[item].price %>)</p>
+						<p style='margin: 0px; padding: 0px;'><%= c[item].description %></p><br/>
+					<% } %>
+				</div>
+			<% } %>
+		</div>
+		<button id="save" type="button" onclick="updateRestaurant()">Save</button>
+	</body>
+	<script src="../../client.js"></script>
+</html>

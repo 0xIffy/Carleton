@@ -1,0 +1,20 @@
+COMP3000 Assignment 1
+Braeden Hall
+101143403
+Febuary 10, 2021
+
+1. The environment variable 'X' was created by the user 'student' and therefore shows up in the environment variables for that student. The sudo command allows a user to execute a command as a different user (usually the superuser 'root'), therefore the user will not be able to see its existing environment variables by default when using sudo.
+	 This can be bypassed by passing the -E flag to sudo, this allows the calling user to preserve its existing environment variables when calling sudo.
+
+2. All the command display the message "Hi there?" in the terminal window.
+	 This happens because all of stdin, stdout and stderr default to displaying in the terminal window.
+
+3. This happens because interactive programs take input from stdin, same as the shell. Because of this, if one is run in the background, only a fraction of the characters typed will be recieved by the interactive program. The other fraction will be received by the shell.
+	 The SIGCHLD signal can be sent to parent process (the running 3000shell) recover from this situation.
+	 This is possible because in the code for signal handlers in 3000shell.c it tells the parent process to 'wait' for the child process using the wait system call whenever the SIGCHLD signal is received. In this case the parent is the running 3000shell and the child would be the interactive program called in the background. The wait system call forces the parent to wait for a state change in the child process, i.e. for it to terminate. This effectively brings the child process into the foreground.
+	 
+	
+Resources Used:
+- Q1: the man page for sudo
+- Q3: the man page for the wait() system call
+- Q5: this: https://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program stack overflow post, which directed me to the man page for library function getcwd().

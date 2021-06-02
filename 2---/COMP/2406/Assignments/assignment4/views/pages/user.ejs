@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>LoTD</title>
+	</head>
+	<body>
+		<%- include("../partials/header.ejs"); %>
+		<br/>
+		<div>
+			<h3><%= user.username %></h3>
+			<% if(user.orders.length > 0){ %>
+				<% user.orders.forEach(orderId => { %>
+					<a href="/orders/<%=orderId%>">Order #: <%= orderId %></a><br/>
+				<% }); %>
+			<% } else{ %>
+				<p>This user currently has no orders.</p>
+			<% } %>
+		</div>
+		<br/><br/>
+		<div>
+			<% if(String(user._id) == session.userId){ %>
+				<label for="privacy">Change Privacy:</label>
+				<select id="privacy">
+					<option value="">Public</option>
+					<% if(session.accountType){ %>
+						<option value=true selected>Private</option>
+					<% } else{%>
+						<option value=true>Private</option>
+					<% } %>
+				</select>
+				<button type="button" onclick="switchPrivacy()">Save</button>
+			<% } %>
+		</div>
+	</body>
+	<script src="../../user.js"></script>
+</html>

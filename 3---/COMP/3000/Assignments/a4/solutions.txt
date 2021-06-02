@@ -1,0 +1,19 @@
+COMP3000 Assignment 3
+Braeden Hall
+101143403
+April 12, 2021
+
+1.  See ones.diff
+		Research that helped: https://linux-kernel-labs.github.io/refs/heads/master/labs/device_drivers.html
+
+2.  - The line after fix: *mode = 0666;
+		- This line sets the file's permission bits for the device. It was originally set to 0444 or r--r--r--, which only gave read access to all users including the owner (root). 
+		The change I made gives the owner of the file permission ot write to it. So the new permission bits are rw-r--r--.
+
+3.	You need to add the .write method to the file_operations struct "ones_fops".
+
+4.	ones_device = device_create(ones_class, NULL, MKDEV(ones_major, 0), NULL, DEVICE_NAME);
+
+Bonus: See newgetpid.diff
+	Helpful reasearch: - https://stackoverflow.com/questions/29451920/how-to-get-process-name-from-pid-using-c
+										 - and several bootlin pages

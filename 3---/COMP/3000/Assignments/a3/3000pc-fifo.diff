@@ -1,0 +1,121 @@
+*** 3000pc-fifo.c	2020-11-01 15:02:29.000000000 -0500
+--- 3000pc-fifo-mod.c	2021-03-25 16:10:53.180000000 -0400
+***************
+*** 25,30 ****
+--- 25,33 ----
+  #include <errno.h>
+  #include <string.h>
+  #include <time.h>
++ #include <sys/types.h>
++ #include <sys/stat.h>
++ #include <fcntl.h>
+  
+  #define QUEUESIZE 32
+  #define WORDSIZE 16
+***************
+*** 68,74 ****
+  void usage_exit(char *progname)
+  {
+          fprintf(stderr,
+!                 "Usage: %s <event count> <prod interval int> <con interval int>\n",
+                  progname);
+          exit(-1);
+  }
+--- 71,77 ----
+  void usage_exit(char *progname)
+  {
+          fprintf(stderr,
+!                 "Usage: %s <event count> <prod interval int> <con interval int> <fifo name>\n",
+                  progname);
+          exit(-1);
+  }
+***************
+*** 165,174 ****
+  {
+          int pid, count, prod_interval, con_interval;
+          int pipefd[2];
+  
+          srandom(time(NULL));
+  
+!         if (argc < 4)
+          {
+                  if (argc < 1)
+                  {
+--- 168,179 ----
+  {
+          int pid, count, prod_interval, con_interval;
+          int pipefd[2];
++ 	char *pipefn;
++ 	
+  
+          srandom(time(NULL));
+  
+!         if (argc < 5)
+          {
+                  if (argc < 1)
+                  {
+***************
+*** 182,210 ****
+                  }
+          }
+  
+          count = atoi(argv[1]);
+          prod_interval = atoi(argv[2]);
+          con_interval = atoi(argv[3]);
+  
+          /* Open a fifo
+           * pipefd[0] will be open for reading, and
+           * pipefd[1] will be open for writing */
+!         if (pipe(pipefd))
+          {
+                  fprintf(stderr, "Error: Unable to open pipe: %s\n", strerror(errno));
+                  exit(-1);
+          }
+! 
+          pid = fork();
+  
+          if (pid == 0)
+          {
+                  /* Producer */
+                  producer(count, pipefd[1], prod_interval);
+          }
+          else
+          {
+                  /* Consumer */
+                  consumer(count, pipefd[0], con_interval);
+          }
+  
+--- 187,219 ----
+                  }
+          }
+  
++ 
+          count = atoi(argv[1]);
+          prod_interval = atoi(argv[2]);
+          con_interval = atoi(argv[3]);
++ 	pipefn = argv[4];
+  
+          /* Open a fifo
+           * pipefd[0] will be open for reading, and
+           * pipefd[1] will be open for writing */
+! /*	if (pipe(pipefd))
+          {
+                  fprintf(stderr, "Error: Unable to open pipe: %s\n", strerror(errno));
+                  exit(-1);
+          }
+! */
+          pid = fork();
+  
+          if (pid == 0)
+          {
+                  /* Producer */
++ 		pipefd[1] = open(pipefn, O_WRONLY);
+                  producer(count, pipefd[1], prod_interval);
+          }
+          else
+          {
+                  /* Consumer */
++ 		pipefd[0] = open(pipefn, O_RDONLY);
+                  consumer(count, pipefd[0], con_interval);
+          }
+  

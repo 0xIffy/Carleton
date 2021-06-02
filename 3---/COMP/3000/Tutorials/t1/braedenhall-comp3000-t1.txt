@@ -1,0 +1,45 @@
+COMP3000 Tutorial 1
+Braeden Hall
+101143403
+January 21, 2021
+
+1. 
+a) lsb_release -a: to check linux distribution, uname -a: to check kernel version
+b) which <shell> (i.e bash) to find the binary path
+c) free --mega to see information about memory in megabytes, lscpu to view info abou the cpu
+
+2.
+which: returns the pathname of the executable file passed as argument.
+pwd: prints the name of the current/working directory.
+who: prints info about the currently logged in user.
+whoami: prints username associated with the current user id.
+whereis: locates the binary, source and manual pages for the argument command.
+
+3. You can see whether a command internal or external you can use the 'type' command (hashed means external).
+man: /usr/bin/man
+which: /usr/bin/which
+whereis: /usr/bin/whereis
+
+4. man -7 environ: to see documentation.
+export PATH=$PATH(pwd): to add temporary path variables
+to make the change permanent you canadd the previous line to the .bashrc file
+
+5. All of the commands I listsed in question 3 are owned by root and in group root.
+This can be found using the ls -l command on the specific program binary.
+
+6. permission bits define the access level that different users/groups have when using the file.
+The first 3 are for the file user, the next 3 are for the owner's group, and the last 3 are for everyone else.
+
+7. /etc/passwd: owner=root, group=root, permissions: owner can read and write, group and everyone else can only read the file. Used to change the user password and stores the passwords.
+/etc/shadow: owner=root, group=shadow, permissions: owner can read and write, group can only read, everyone else has no access permissions to the file. Stores the encrypted passwords.
+
+8. This means that you have permission to change to that directory and access its files.
+
+9. The -l option for the ls command is used to see permission bits as well as owner and group.
+The -a option can be used to see all the hidden files in a directory.
+The file/directory can be made hidden by starting the name with the '.' symbol.
+
+10. 1) doesn't show the current directory at the prompt
+		2) tab completion does not work
+		3) arrow keys don't recall previous commands
+		4) type command does not work

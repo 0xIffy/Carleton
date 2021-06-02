@@ -1,0 +1,22 @@
+COMP3000 Tutorial 4
+Braeden Hall
+101143403
+Febuary 21, 2021
+
+2. You must set the 'TERM' environment variable to  xterm-256color in order to preserve colours.
+
+3. The getpwnam() lib function returns a pointer to a password structure that contains various data from the password database for the given user. I would have expected it to return only the password value, but it makes sense to include additional info about the user (like uid gid etc.) at the same time.
+
+4. When you run 3000userlogin with setuid or setgid the effective uid or gid is set to 0 respectively, i.e. it is run as the root user/group. When you run it using sudo all the fields are 0, including the uid and gid, not just the effective ones.
+
+5. Trying to change to another group fails, this is beacuse changing group requires euid of 0.
+
+6. To set the user's shell to what is specified in the password entry you can change the call to exec on line 68 to read from the pw_shell in the pw_entry instead of the hard coded value of /bin/bash.
+
+7. In order to make chsh accept 3000shell it must be listed in the /etc/shells file. Running 3000shell like this causes an issue where the username shown at the prompt is set to unknown instead of the user's name. To fix this you simply need to set the 'USER' env variable to the username of the current user in the 3000userlogin file.
+
+8. I don't think that the shell can be an arbitrayry program, I tried replacing the shell with the binary for ls and it didn't seem to work. However, it may be possible to make another interactive program run as a 'shell'.
+
+9. From checking the output of env after running 3000userlogin, no, the ones set by 3000userlogin are not the only ones visible. Additional env variables include: PWD, LS_COLORS, and some pertaining to the less command.
+
+10. using envp instead of environ seems to preserve the envrironment variables better. For instance, the prompt is coloured without needing to set the 'TERM' env variable. There are also additional variables that were not there when using environ. 'environ' is better for portability.

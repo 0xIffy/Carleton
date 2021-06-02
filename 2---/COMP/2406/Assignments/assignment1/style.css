@@ -1,0 +1,15 @@
+html {
+    scroll-behavior: smooth;
+}
+
+p {
+    margin: 0px;
+    padding: 0px;
+}
+
+
+
+.col {
+    float: left;
+    margin: 0px;
+}

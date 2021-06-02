@@ -1,0 +1,53 @@
+COMP3000 Assignment 3
+Braeden Hall
+101143403
+March 26, 2021
+
+Part 1:
+
+1.	- The truncate command extends or shrinks the size of a file to the given size (in this case 256 Mb). This explains why the logical size of myfile1 is 268435456 byte (256MB), but the physicals size is 0 because we do not fill the file with anything.
+		- The dd copies count*bs bytes from 1 file (if) to another file (of) the seek param effectively sets the logical size of the new file to the given number of bytes (N) + count*bs by skipping the first N bytes of the file before writing.
+			- myfile2 is created by copying data from /dev/zero which actually contains data so the request to copy 1 block (1MB) results in the physical size being set to the size of that data
+			- myfile3 gets data from /dev/null which contains infinite nothing, i.e. there is nothing to copy which is why the physical size is 0
+
+2. See 3000test-mod.c
+
+3. The benefit of mmap is that it both allocates memory for the buffer and read the data into it with one command. Trying to achieve this a different way requires doing these 2 steps seperately.
+
+4. See 3000test-mod.c.
+
+
+Part 2:
+
+1.	a) Pick an arbitrary number of for the second argument (event count), and set prod interval to 0 and consumer interval to 1
+		b) Run the program (./3000pc-fifo) with the specified arguments and terminate it (Ctrl+C) right away.
+		c) If "Producer finished." is the first line of the output increase the event count argument, if it is not the first line decrease the event count argument
+		d) Repeat steps b and c until you see a change; i.e. "Producer finished." went from being the first line output to not being the first line output or vice-versa
+		e) Repeat step d until a change of 1 (either increment or decrement) to the event count argument causes the change.
+
+		The event count that I found that switches the output most consistently is going from 255 to 256. Since it is char pointers that are being written to the buffer that would imply that the buffer size is 256 * 8 = 2048 bytes.
+
+2.	See  3000pc-fifo-mod.c.
+
+3.	- The second last argument to sem_init() is set to 1 to indicate that the semaphore is to be shared between processes and should therfore be in some region of shared memory.
+		- The last argument to sem_init() is set to 1 because that is the value that we wish the semaphore to be initialized with. This is because we want the semaphore to act as a binary mutex and we want the first attempt to access the lock to succeed.
+
+4.	This is because the MAP_ANONYMOUS flag is passed in the call. This means that the mapping contents ar initialized to 0 and not backed by a file. The fd field (the second last) should be set to -1 for portability to comply with some implementations of mmap that require it to be,
+		though the field will most likely just be ignored.
+
+Bonus: 	- Run setup.sh
+				- Run dumpe2fs foo on the the created foo file
+				- Find and take note of the blocksize (bs) field, the Inode size (is) field, and the Inodes per group (ipg) field
+				- Mount foo to a directory of your choosing, say /mnt
+				- Run ls -lais on /mnt and take note of the inode number (in) of the victimdir directory
+				- Unmount the foo fs
+				- When I did this I got the values bs=1024, is=128, ipg=2048 and in=4097
+				- Calculate block group (bg) as follows bg=(in-1) / ipg = (4097 - 1) / 2048 = 2
+				- Calculate the index (i) of the inode in the group as i = (in - 1) % ipg = (4097 - 1) % 2048 = 0
+				- The offset is equal to i * is but since i is 0 offset is also 0
+				- Run dumpe2fs foo again and go to the Inode table at field under the calculated block group (2) and note the beginning block (bi), in my case 781
+				- Calculate the byte address (add) as add = (bs * bi) + offset = (1024 * 781) + 0 = 799744
+				- Run the dd command with the values of is and add exactly as follows:
+					- dd conv=notrunc if=/dev/zero of=foo bs=1 count=128 seek=799744
+				- Mount the foo fs again
+				- The victimdir should now be corrupted and after running fsck.ext4 -f foo the victim file should be in the lost+found dir
